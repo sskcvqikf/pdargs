@@ -39,6 +39,50 @@ namespace detail
         return opt != nullptr &&
                opt[0] == '-';
     }
+
+    template<typename T>
+    T string_to_T(const std::string&);
+
+    template<>
+    int string_to_T<int>(const std::string &str)
+    {
+        return std::stoi(str);
+    }
+    template<>
+    long string_to_T<long>(const std::string &str)
+    {
+        return std::stol(str);
+    }
+    template<>
+    long long string_to_T<long long>(const std::string &str)
+    {
+        return std::stoll(str);
+    }
+    template<>
+    unsigned long string_to_T<unsigned long>(const std::string &str)
+    {
+        return std::stoul(str);
+    }
+    template<>
+    unsigned long long string_to_T<unsigned long long>(const std::string &str)
+    {
+        return std::stoull(str);
+    }
+    template<>
+    float string_to_T<float>(const std::string &str)
+    {
+        return std::stof(str);
+    }
+    template<>
+    double string_to_T<double>(const std::string &str)
+    {
+        return std::stod(str);
+    }
+    template<>
+    long double string_to_T<long double>(const std::string &str)
+    {
+        return std::stold(str);
+    }
 } // namespace detail
 
 struct pdargs
@@ -55,14 +99,16 @@ struct pdargs
             std::cout << i << '\n';
     }
 
-private:
+    template<typename T>
+    std::optional<T> get(std::pair<std::string, char>);
 
+private:
     void add_long_arg(std::string);
     void add_long_arg(std::string, std::string);
     void add_short_arg(std::string);
     void add_short_arg(std::string, std::string);
 
-    std::vector<std::pair<std::string, std::string>> longs_;
+    std::unordered_map<std::string, std::string> longs_;
     std::vector<std::string> shorts_;
 };
 
@@ -87,17 +133,14 @@ void pdargs::add_long_arg(std::string arg)
     auto delim_idx = arg.find('=');
     if (delim_idx == std::string::npos)
         throw std::invalid_argument("Long option must have an argument separated with '='\n");
-    longs_.push_back(std::make_pair(
-                std::string(arg, 0, delim_idx),
-                std::string(arg, delim_idx+1)));
+    longs_[std::string(arg, 0, delim_idx)] = std::string(arg, delim_idx+1);
 
 }
 
 void pdargs::add_long_arg(std::string arg, std::string param)
 {
     detail::ltrim(arg);
-    longs_.push_back(std::make_pair(
-                std::move(arg), std::move(param)));
+    longs_[std::move(arg)] = std::move(param);
 }
 
 pdargs::pdargs(int argc, char** argv)
@@ -130,6 +173,28 @@ pdargs::pdargs(int argc, char** argv)
                 add_short_arg(arg);
         }
     }
+}
+
+template<typename T>
+std::optional<T> pdargs::get(std::pair<std::string, char> arg)
+{
+    auto long_arg = longs_.extract(arg.first);
+    auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
+            [&arg] (auto str)
+            {
+                return str[0] == arg.second;
+            });
+    if (long_arg.empty() && short_arg == shorts_.end())
+        return std::nullopt;
+    if (!long_arg.empty() && short_arg != shorts_.end())
+        throw std::runtime_error("Option is presented both in long and short variants.\n");
+    if (!long_arg.empty())
+    {
+        return detail::string_to_T<T>(long_arg.mapped());
+    }
+    auto ret = detail::string_to_T<T>(std::string(*short_arg, 1));
+    shorts_.erase(short_arg);
+    return ret;
 }
 
 } // namespace pd

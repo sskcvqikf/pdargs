@@ -9,6 +9,7 @@
 #include <exception>
 #include <algorithm>
 #include <iostream>
+#include <limits>
 
 namespace pd
 {
@@ -57,6 +58,14 @@ namespace detail
     long long string_to_T<long long>(const std::string &str)
     {
         return std::stoll(str);
+    }
+    template<>
+    unsigned string_to_T<unsigned>(const std::string &str)
+    {
+        unsigned long result = std::stoul(str);
+        if (result > std::numeric_limits<unsigned>::max())
+            throw std::out_of_range("stou");
+        return result;
     }
     template<>
     unsigned long string_to_T<unsigned long>(const std::string &str)
@@ -124,6 +133,8 @@ void pdargs::add_short_arg(std::string arg)
 void pdargs::add_short_arg(std::string arg, std::string param)
 {
     detail::ltrim(arg);
+    if (arg.size() > 2)
+        throw std::invalid_argument("Short option must be exactly one character length if separated with space");
     shorts_.push_back(arg + param);
 }
 
@@ -132,7 +143,7 @@ void pdargs::add_long_arg(std::string arg)
     detail::ltrim(arg);
     auto delim_idx = arg.find('=');
     if (delim_idx == std::string::npos)
-        throw std::invalid_argument("Long option must have an argument separated with '='\n");
+        longs_[std::move(arg)] = {};
     longs_[std::string(arg, 0, delim_idx)] = std::string(arg, delim_idx+1);
 
 }
@@ -154,8 +165,7 @@ pdargs::pdargs(int argc, char** argv)
                 add_long_arg(arg);
             else if (argv[i+1][0] != '-')
             {
-                add_long_arg(arg, argv[i+1]);
-                ++i;
+                add_long_arg(arg, argv[++i]);
             }
             else
                 add_long_arg(arg);
@@ -165,10 +175,7 @@ pdargs::pdargs(int argc, char** argv)
             if (i == argc - 1)
                 add_short_arg(arg);
             else if (argv[i+1][0] != '-')
-            {
-                add_short_arg(arg, argv[i+1]);
-                ++i;
-            }
+                add_short_arg(arg, argv[++i]);
             else
                 add_short_arg(arg);
         }
@@ -195,6 +202,22 @@ std::optional<T> pdargs::get(std::pair<std::string, char> arg)
     auto ret = detail::string_to_T<T>(std::string(*short_arg, 1));
     shorts_.erase(short_arg);
     return ret;
+}
+
+template<>
+std::optional<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
+{
+    auto long_arg = longs_.extract(arg.first);
+    auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
+            [&arg] (auto str)
+            {
+                return str[0] == arg.second;
+            });
+    if (long_arg.empty() && short_arg == shorts_.end())
+        return std::nullopt;
+    if (!long_arg.empty() && short_arg != shorts_.end())
+        throw std::runtime_error("Option is presented both in long and short variants.\n");
+    return true;
 }
 
 } // namespace pd

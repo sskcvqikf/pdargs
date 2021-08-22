@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 
 namespace pd
 {
@@ -116,6 +117,12 @@ struct pdargs
     template<typename T>
     std::optional<T> get(std::pair<std::string, char>);
 
+    bool get(std::pair<std::string, char>);
+
+    template<typename T, typename U = T>
+    T get_or(std::pair<std::string, char>, U&&);
+
+
 private:
     void add_long_arg(std::string);
     void add_long_arg(std::string, std::string);
@@ -161,7 +168,7 @@ void pdargs::add_long_arg(std::string arg, std::string param)
 
 pdargs::pdargs(int argc, char** argv)
 {
-    for (int i = 0; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         auto arg = argv[i];
         if (detail::is_long_opt(arg))
@@ -211,8 +218,7 @@ std::optional<T> pdargs::get(std::pair<std::string, char> arg)
     return ret;
 }
 
-template<>
-std::optional<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
+bool pdargs::get(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
     
@@ -236,10 +242,35 @@ std::optional<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
             return str.empty();
         }), shorts_.end());
     if (long_arg.empty() && !short_flag)
-        return std::nullopt;
+        return false;
     if (!long_arg.empty() && short_flag)
         throw std::runtime_error("Option is presented both in long and short variants.\n");
     return true;
+}
+
+
+template<typename T, typename U>
+T pdargs::get_or(std::pair<std::string, char> arg, U&& val)
+{
+    static_assert(std::is_convertible_v<U&&, T> &&
+            !std::is_same_v<T, bool>, "T must be convertible from U&& and T must not be bool.\n");
+    auto long_arg = longs_.extract(arg.first);
+    auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
+            [&arg] (const auto& str)
+            {
+                return str[0] == arg.second;
+            });
+    if (long_arg.empty() && short_arg == shorts_.end())
+        return static_cast<T>(std::forward<U>(val));
+    if (!long_arg.empty() && short_arg != shorts_.end())
+        throw std::runtime_error("Option is presented both in long and short variants.\n");
+    if (!long_arg.empty())
+    {
+        return detail::string_to_T<T>(long_arg.mapped());
+    }
+    auto ret = detail::string_to_T<T>(std::string(*short_arg, 1));
+    shorts_.erase(short_arg);
+    return ret;
 }
 
 } // namespace pd

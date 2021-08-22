@@ -1,6 +1,5 @@
 CXX			= g++
-CXXFLAGS	= -std=c++17 -Wall -Wextra -O2
-LNKFLAGS	= -std=c++17 -O2
+CXXFLAGS	= -std=c++17 -Wall -Wextra -Wno-write-strings -O2
 
 I_DIR		= ./include
 

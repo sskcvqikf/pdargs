@@ -98,6 +98,21 @@ namespace detail
     {
         return c >= '0' && c <= '9';
     }
+
+    template<typename T>
+    struct get_return
+    {
+        using type = std::optional<T>;
+    };
+
+    template<>
+    struct get_return<bool>
+    {
+        using type = bool;
+    };
+
+    template<typename T>
+    using get_return_t = typename get_return<T>::type;
 } // namespace detail
 
 struct pdargs
@@ -115,9 +130,7 @@ struct pdargs
     }
 
     template<typename T>
-    std::optional<T> get(std::pair<std::string, char>);
-
-    bool get(std::pair<std::string, char>);
+    detail::get_return_t<T> get(std::pair<std::string, char>);
 
     template<typename T, typename U = T>
     T get_or(std::pair<std::string, char>, U&&);
@@ -197,7 +210,7 @@ pdargs::pdargs(int argc, char** argv)
 }
 
 template<typename T>
-std::optional<T> pdargs::get(std::pair<std::string, char> arg)
+detail::get_return_t<T> pdargs::get(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
     auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
@@ -218,7 +231,8 @@ std::optional<T> pdargs::get(std::pair<std::string, char> arg)
     return ret;
 }
 
-bool pdargs::get(std::pair<std::string, char> arg)
+template<>
+detail::get_return_t<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
     

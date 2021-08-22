@@ -92,6 +92,11 @@ namespace detail
     {
         return std::stold(str);
     }
+
+    bool is_digit(char c)
+    {
+        return c >= '0' && c <= '9';
+    }
 } // namespace detail
 
 struct pdargs
@@ -163,7 +168,8 @@ pdargs::pdargs(int argc, char** argv)
         {
             if (i == argc - 1)
                 add_long_arg(arg);
-            else if (argv[i+1][0] != '-')
+            else if (argv[i+1][0] != '-' ||
+                    (argv[i+1][0] == '-' && detail::is_digit(argv[i+1][1])))
             {
                 add_long_arg(arg, argv[++i]);
             }
@@ -174,7 +180,8 @@ pdargs::pdargs(int argc, char** argv)
         {
             if (i == argc - 1)
                 add_short_arg(arg);
-            else if (argv[i+1][0] != '-')
+            else if (argv[i+1][0] != '-' ||
+                    (argv[i+1][0] == '-' && detail::is_digit(argv[i+1][1])))
                 add_short_arg(arg, argv[++i]);
             else
                 add_short_arg(arg);
@@ -187,7 +194,7 @@ std::optional<T> pdargs::get(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
     auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
-            [&arg] (auto str)
+            [&arg] (const auto& str)
             {
                 return str[0] == arg.second;
             });
@@ -208,14 +215,29 @@ template<>
 std::optional<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
-    auto short_arg = std::find_if(shorts_.cbegin(), shorts_.cend(),
-            [&arg] (auto str)
-            {
-                return str[0] == arg.second;
-            });
-    if (long_arg.empty() && short_arg == shorts_.end())
+    
+    bool short_flag{false};
+    shorts_.erase(std::remove_if(shorts_.begin(), shorts_.end(),
+        [&arg, &short_flag] (auto& str)
+        {
+            str.erase(std::remove_if(str.begin(), str.end(),
+                [&arg, &short_flag](auto c)
+                {
+                    if (c == arg.second)
+                    {
+                        if (short_flag)
+                            throw std::invalid_argument("Short options for bool presented in multiple variants.\n");
+                        else
+                            short_flag = true;
+                        return true;
+                    }
+                    return false;
+                }), str.end());
+            return str.empty();
+        }), shorts_.end());
+    if (long_arg.empty() && !short_flag)
         return std::nullopt;
-    if (!long_arg.empty() && short_arg != shorts_.end())
+    if (!long_arg.empty() && short_flag)
         throw std::runtime_error("Option is presented both in long and short variants.\n");
     return true;
 }

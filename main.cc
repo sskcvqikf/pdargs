@@ -7,26 +7,29 @@ void* print_testname(const char* name)
     return nullptr;
 }
 
+bool is_failed = false;
+
 #define TEST(name)                                      \
     void name(void* = print_testname(#name))            \
 
-
 #define ASSERT(expr, message)                           \
     std::cout << "RUNNING: " << #expr;                  \
-    if (!(expr))                                        \
+    if (!(expr)){ is_failed = true;                     \
         std::cerr << " - FAILED.\n" << __FILE__ << ":"  \
-            << __LINE__ << " " << message << '\n';      \
+            << __LINE__ << " " << message << '\n';}     \
     else std::cout << " - PASSED.\n";
 
 #define ASSERT_THROW(expr, exc, message)                \
     std::cout << "RUNNING: " << #expr;                  \
     try {                                               \
         expr;                                           \
+        is_failed = true;                               \
         std::cerr << " - FAILED." << " No exception.\n" \
         << __FILE__ << ":" << __LINE__ << " "           \
         << message << '\n';                             \
     } catch (exc&) {std::cout << " - PASSED.\n";}       \
-      catch (...) {std::cerr << " - FAILED."            \
+      catch (...) { is_failed = true;                   \
+          std::cerr << " - FAILED."                     \
           << " Other exception.\n" << __FILE__ << ":"   \
           << __LINE__ << " " << message << '\n';};      \
 
@@ -60,6 +63,8 @@ int main()
 {
     BaseTest();
     TestNumbers();
+    if (is_failed)
+        exit(1);
     
     return 0;
 }

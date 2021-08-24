@@ -93,6 +93,16 @@ namespace detail
     {
         return std::stold(str);
     }
+    template<>
+    std::string_view string_to_T<std::string_view>(const std::string &str)
+    {
+        return str;
+    }
+    template<>
+    std::string string_to_T<std::string>(const std::string &str)
+    {
+        return str;
+    }
 
     bool is_digit(char c)
     {
@@ -118,16 +128,6 @@ namespace detail
 struct pdargs
 {
     explicit pdargs(int argc, char** argv); 
-
-    void print()
-    {
-        std::cout << "Longs:\n";
-        for(const auto& i: longs_)
-            std::cout << i.first << " " << i.second << '\n';
-        std::cout << "Shorts:\n";
-        for(const auto& i: shorts_)
-            std::cout << i << '\n';
-    }
 
     template<typename T>
     detail::get_return_t<T> get(std::pair<std::string, char>);

@@ -135,7 +135,6 @@ struct pdargs
     template<typename T, typename U = T>
     T get_or(std::pair<std::string, char>, U&&);
 
-
 private:
     void add_long_arg(std::string);
     void add_long_arg(std::string, std::string);
@@ -287,5 +286,7 @@ T pdargs::get_or(std::pair<std::string, char> arg, U&& val)
     return ret;
 }
 
+template<>
+bool pdargs::get_or<bool, bool>(std::pair<std::string, char>, bool&&) = delete;
 } // namespace pd
 #endif // PDARGS_PDARGS_HH_

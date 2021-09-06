@@ -149,7 +149,7 @@ void pdargs::add_short_arg(std::string arg)
 {
     auto delim_idx = arg.find('=');
     if (delim_idx != std::string::npos)
-        arg.erase(delim_idx);
+        arg.erase(delim_idx, 1);
     detail::ltrim(arg);
     shorts_.push_back(std::move(arg));
 }

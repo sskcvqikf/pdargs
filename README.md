@@ -33,17 +33,17 @@ int main(int argc, char **argv)
 ```
 Result:
 ```bash
-: ./main                                                                                                                                                                                                  
+: ./main
 You have to provide hostname to ping!
-: ./main --hostname archlinux.org                                                                                                                                                                        
+: ./main --hostname archlinux.org
 Hostname: archlinux.org
 Number: 32
 Count: 256
-: ./main -harchlinux.org --count=4                                                                                                                                                                        
+: ./main -harchlinux.org --count=4
 Hostname: archlinux.org
 Number: 32
 Count: 4
-: ./main -harchlinux.org -c=4 -n64                                                                                                                                                                        
+: ./main -harchlinux.org -c=4 -n64
 Hostname: archlinux.org
 Number: 64
 Count: 4
@@ -81,15 +81,15 @@ int main(int argc, char **argv)
 ```
 Result:
 ```bash
-: ./main -Syu                                                                                                                                                                                             
+: ./main -Syu
 sync is enabled
 sysupgrade is enabled
 refresh is enabled
-: ./main --sync --sysupgrade -y                                                                                                                                                                           
+: ./main --sync --sysupgrade -y
 sync is enabled
 sysupgrade is enabled
 refresh is enabled
-: ./main -Syu -syank                                                                                                                                                                                      
+: ./main -Syu -syank
 terminate called after throwing an instance of 'std::invalid_argument'
   what():  Short options for bool presented in multiple variants.
 ```

@@ -142,12 +142,12 @@ TEST(TestShortOptions)
     REQUIRE(args.get<double>({"fraction", 'f'}) == 12.532);
     REQUIRE(args.get<bool>({"XXXXX", 'X'}));
     REQUIRE(args.get<bool>({"aaaaaa", 'a'}));
-    REQUIRE(args.get<bool>({"aaaaaa", 'c'}));
-    REQUIRE(args.get<bool>({"aaaaaa", 'b'}));
+    REQUIRE(args.get<bool>({"cccccc", 'c'}));
+    REQUIRE(args.get<bool>({"bbbbbb", 'b'}));
     REQUIRE(!args.get<bool>({"XXXXX", 'X'}));
     REQUIRE(!args.get<bool>({"aaaaaa", 'a'}));
-    REQUIRE(!args.get<bool>({"aaaaaa", 'c'}));
-    REQUIRE(!args.get<bool>({"aaaaaa", 'b'}));
+    REQUIRE(!args.get<bool>({"cccccc", 'c'}));
+    REQUIRE(!args.get<bool>({"bbbbbb", 'b'}));
 }
 
 int main()

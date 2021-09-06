@@ -4,11 +4,9 @@
 
 #include <string>
 #include <vector>
-#include <string_view>
 #include <optional>
 #include <exception>
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <type_traits>
 
@@ -43,25 +41,25 @@ namespace detail
     }
 
     template<typename T>
-    T string_to_T(const std::string&);
+    T string_to_T(std::string&&);
 
     template<>
-    int string_to_T<int>(const std::string &str)
+    int string_to_T<int>(std::string &&str)
     {
         return std::stoi(str);
     }
     template<>
-    long string_to_T<long>(const std::string &str)
+    long string_to_T<long>(std::string &&str)
     {
         return std::stol(str);
     }
     template<>
-    long long string_to_T<long long>(const std::string &str)
+    long long string_to_T<long long>(std::string &&str)
     {
         return std::stoll(str);
     }
     template<>
-    unsigned string_to_T<unsigned>(const std::string &str)
+    unsigned string_to_T<unsigned>(std::string &&str)
     {
         unsigned long result = std::stoul(str);
         if (result > std::numeric_limits<unsigned>::max())
@@ -69,39 +67,34 @@ namespace detail
         return result;
     }
     template<>
-    unsigned long string_to_T<unsigned long>(const std::string &str)
+    unsigned long string_to_T<unsigned long>(std::string &&str)
     {
         return std::stoul(str);
     }
     template<>
-    unsigned long long string_to_T<unsigned long long>(const std::string &str)
+    unsigned long long string_to_T<unsigned long long>(std::string &&str)
     {
         return std::stoull(str);
     }
     template<>
-    float string_to_T<float>(const std::string &str)
+    float string_to_T<float>(std::string &&str)
     {
         return std::stof(str);
     }
     template<>
-    double string_to_T<double>(const std::string &str)
+    double string_to_T<double>(std::string &&str)
     {
         return std::stod(str);
     }
     template<>
-    long double string_to_T<long double>(const std::string &str)
+    long double string_to_T<long double>(std::string &&str)
     {
         return std::stold(str);
     }
     template<>
-    std::string_view string_to_T<std::string_view>(const std::string &str)
+    std::string string_to_T<std::string>(std::string &&str)
     {
-        return str;
-    }
-    template<>
-    std::string string_to_T<std::string>(const std::string &str)
-    {
-        return str;
+        return std::move(str);
     }
 
     bool is_digit(char c)
@@ -217,15 +210,16 @@ detail::get_return_t<T> pdargs::get(std::pair<std::string, char> arg)
             {
                 return str[0] == arg.second;
             });
+
     if (long_arg.empty() && short_arg == shorts_.end())
         return std::nullopt;
     if (!long_arg.empty() && short_arg != shorts_.end())
         throw std::runtime_error("Option is presented both in long and short variants.\n");
     if (!long_arg.empty())
     {
-        return detail::string_to_T<T>(long_arg.mapped());
+        return detail::string_to_T<T>(std::move(long_arg.mapped()));
     }
-    auto ret = detail::string_to_T<T>(std::string(*short_arg, 1));
+    auto ret = detail::string_to_T<T>(std::move(std::string(*short_arg, 1)));
     shorts_.erase(short_arg);
     return ret;
 }
@@ -279,7 +273,7 @@ T pdargs::get_or(std::pair<std::string, char> arg, U&& val)
         throw std::runtime_error("Option is presented both in long and short variants.\n");
     if (!long_arg.empty())
     {
-        return detail::string_to_T<T>(long_arg.mapped());
+        return detail::string_to_T<T>(std::move(long_arg.mapped()));
     }
     auto ret = detail::string_to_T<T>(std::string(*short_arg, 1));
     shorts_.erase(short_arg);

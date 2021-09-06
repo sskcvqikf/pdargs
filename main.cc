@@ -118,6 +118,38 @@ TEST(TestGetOr)
     REQUIRE(!args.get<bool>({"update", 'u'}));
 }
 
+TEST(TestEqualSign)
+{
+    char *argv[] = {"./main", "--selection=primary", "-f=soft", "-c=55", "--portion=0.5"};
+    int argc = 5;
+    pd::pdargs args{argc, argv};
+
+    REQUIRE(args.get<std::string>({"selection", 's'}) == "primary");
+    REQUIRE(args.get<std::string>({"force", 'f'}) == "soft");
+    REQUIRE(args.get<int>({"count", 'c'}) == 55);
+    REQUIRE(args.get<double>({"portion", 'p'}) == 0.5);
+}
+
+TEST(TestShortOptions)
+{
+    char *argv[] = {"./main", "-sprimary", "-Wall", "-c155", "-f12.532", "-Xabc"};
+    int argc = 6;
+    pd::pdargs args{argc, argv};
+
+    REQUIRE(args.get<std::string>({"selection", 's'}) == "primary");
+    REQUIRE(args.get<std::string>({"warnings", 'W'}) == "all");
+    REQUIRE(args.get<unsigned long>({"count", 'c'}) == 155);
+    REQUIRE(args.get<double>({"fraction", 'f'}) == 12.532);
+    REQUIRE(args.get<bool>({"XXXXX", 'X'}));
+    REQUIRE(args.get<bool>({"aaaaaa", 'a'}));
+    REQUIRE(args.get<bool>({"aaaaaa", 'c'}));
+    REQUIRE(args.get<bool>({"aaaaaa", 'b'}));
+    REQUIRE(!args.get<bool>({"XXXXX", 'X'}));
+    REQUIRE(!args.get<bool>({"aaaaaa", 'a'}));
+    REQUIRE(!args.get<bool>({"aaaaaa", 'c'}));
+    REQUIRE(!args.get<bool>({"aaaaaa", 'b'}));
+}
+
 int main()
 {
     BaseTest();
@@ -125,6 +157,8 @@ int main()
     TestBool();
     TestStrings();
     TestGetOr();
+    TestEqualSign();
+    TestShortOptions();
     if (is_failed)
         exit(1);
     

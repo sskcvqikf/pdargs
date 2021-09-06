@@ -1,3 +1,4 @@
+#include <iostream>
 #include "pd/pdargs.hh"
 
 void* print_testname(const char* name)
@@ -54,7 +55,7 @@ TEST(BaseTest)
     REQUIRE(args.get<bool>({"yuko", 'y'}));
     REQUIRE(args.get<bool>({"update", 'u'}));
     REQUIRE(!args.get<bool>({"increase", 'i'}));
-    REQUIRE(args.get<std::string_view>({"lines", 'l'}) == "blank");
+    REQUIRE(args.get<std::string>({"lines", 'l'}) == "blank");
     ASSERT_THROW((args.get<int>({"port", 'p'}).value()), std::bad_optional_access);
 }
 
@@ -90,13 +91,13 @@ TEST(TestStrings)
     char* argv[] = {"./main", "--selection", "primary", "--mode", "active", "-f", "soft", "--force", "super"};
     int argc = 9;
     pd::pdargs args{argc, argv};
-    REQUIRE(args.get<std::string_view>({"selection", 's'}) == "primary");
+    REQUIRE(args.get<std::string>({"selection", 's'}) == "primary");
     REQUIRE(args.get<std::string>({"mode", 'm'}) == "active");
 
-    ASSERT_THROW(args.get<std::string_view>({"mode", 'm'}).value(), std::bad_optional_access);
+    ASSERT_THROW(args.get<std::string>({"mode", 'm'}).value(), std::bad_optional_access);
     ASSERT_THROW(args.get<std::string>({"selection", 's'}).value(), std::bad_optional_access);
 
-    ASSERT_THROW(args.get<std::string_view>({"force", 'f'}), std::runtime_error);
+    ASSERT_THROW(args.get<std::string>({"force", 'f'}), std::runtime_error);
 }
 
 TEST(TestGetOr)

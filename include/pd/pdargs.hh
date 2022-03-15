@@ -45,22 +45,22 @@ namespace detail
     T string_to_T(std::string&&);
 
     template<>
-    int string_to_T<int>(std::string &&str)
+    inline int string_to_T<int>(std::string &&str)
     {
         return std::stoi(str);
     }
     template<>
-    long string_to_T<long>(std::string &&str)
+    inline long string_to_T<long>(std::string &&str)
     {
         return std::stol(str);
     }
     template<>
-    long long string_to_T<long long>(std::string &&str)
+    inline long long string_to_T<long long>(std::string &&str)
     {
         return std::stoll(str);
     }
     template<>
-    unsigned string_to_T<unsigned>(std::string &&str)
+    inline unsigned string_to_T<unsigned>(std::string &&str)
     {
         unsigned long result = std::stoul(str);
         if (result > std::numeric_limits<unsigned>::max())
@@ -68,37 +68,37 @@ namespace detail
         return result;
     }
     template<>
-    unsigned long string_to_T<unsigned long>(std::string &&str)
+    inline unsigned long string_to_T<unsigned long>(std::string &&str)
     {
         return std::stoul(str);
     }
     template<>
-    unsigned long long string_to_T<unsigned long long>(std::string &&str)
+    inline unsigned long long string_to_T<unsigned long long>(std::string &&str)
     {
         return std::stoull(str);
     }
     template<>
-    float string_to_T<float>(std::string &&str)
+    inline float string_to_T<float>(std::string &&str)
     {
         return std::stof(str);
     }
     template<>
-    double string_to_T<double>(std::string &&str)
+    inline double string_to_T<double>(std::string &&str)
     {
         return std::stod(str);
     }
     template<>
-    long double string_to_T<long double>(std::string &&str)
+    inline long double string_to_T<long double>(std::string &&str)
     {
         return std::stold(str);
     }
     template<>
-    std::string string_to_T<std::string>(std::string &&str)
+    inline std::string string_to_T<std::string>(std::string &&str)
     {
         return std::move(str);
     }
 
-    bool is_digit(char c)
+    inline bool is_digit(char c)
     {
         return c >= '0' && c <= '9';
     }
@@ -139,7 +139,7 @@ private:
     std::vector<std::string> shorts_;
 };
 
-void pdargs::add_short_arg(std::string arg)
+inline void pdargs::add_short_arg(std::string arg)
 {
     auto delim_idx = arg.find('=');
     if (delim_idx != std::string::npos)
@@ -148,7 +148,7 @@ void pdargs::add_short_arg(std::string arg)
     shorts_.push_back(std::move(arg));
 }
 
-void pdargs::add_short_arg(std::string arg, std::string param)
+inline void pdargs::add_short_arg(std::string arg, std::string param)
 {
     detail::ltrim(arg);
     if (arg.size() > 2)
@@ -156,7 +156,7 @@ void pdargs::add_short_arg(std::string arg, std::string param)
     shorts_.push_back(arg + param);
 }
 
-void pdargs::add_long_arg(std::string arg)
+inline void pdargs::add_long_arg(std::string arg)
 {
     detail::ltrim(arg);
     auto delim_idx = arg.find('=');
@@ -166,13 +166,13 @@ void pdargs::add_long_arg(std::string arg)
 
 }
 
-void pdargs::add_long_arg(std::string arg, std::string param)
+inline void pdargs::add_long_arg(std::string arg, std::string param)
 {
     detail::ltrim(arg);
     longs_[std::move(arg)] = std::move(param);
 }
 
-pdargs::pdargs(int argc, char** argv)
+inline pdargs::pdargs(int argc, char** argv)
 {
     for (int i = 1; i < argc; ++i)
     {
@@ -226,7 +226,7 @@ detail::get_return_t<T> pdargs::get(std::pair<std::string, char> arg)
 }
 
 template<>
-detail::get_return_t<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
+inline detail::get_return_t<bool> pdargs::get<bool>(std::pair<std::string, char> arg)
 {
     auto long_arg = longs_.extract(arg.first);
     

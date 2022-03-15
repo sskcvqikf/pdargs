@@ -6,6 +6,7 @@
 #include <vector>
 #include <optional>
 #include <exception>
+#include <stdexcept>
 #include <algorithm>
 #include <limits>
 #include <type_traits>

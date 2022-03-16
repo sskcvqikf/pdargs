@@ -5,7 +5,7 @@ I_DIR		= ./include
 
 all: main
 
-main: main.cc ./include/pd/pdargs.hh
+main: main.cc ./include/pd/pdargs.h
 	$(CXX) $(CXXFLAGS) -I$(I_DIR) -o $@ $<
 
 clean: clean_bin clean_obj

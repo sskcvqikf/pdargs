@@ -7,3 +7,12 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
 FetchContent_MakeAvailable(googletest)
+
+add_executable(pdargs_test test.cc)
+target_link_libraries(pdargs_test PRIVATE gtest_main)
+target_include_directories(pdargs_test PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+include(GoogleTest)
+
+gtest_discover_tests(pdargs_test)
+

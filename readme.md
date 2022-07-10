@@ -7,7 +7,7 @@ I cannot assure that it is POSIX/GNU compliant.
 #### Usage
 Just include `include/pd/pdargs.h` somewhere in your project.
 #### Example #1
-Lets consider simple ping program. It is required to provide hostname to ping. We will name this parameter as `hostname` or `h` as short variant. Two optional parameters are `number/n` - number of bytes to send, and `count/c` - number of replies we need.
+Consider a simple ping program. Since we have to ping something, the hostname is required. Let's name this parameter as `hostname` as a long variant or `h` as a short variant. Then, there is two optional parameters: `number/n` - number of bytes to send, and `count/c` - number of replies we need.
 ```c++
 #include <iostream>
 #include "pd/pdargs.h"
@@ -49,7 +49,7 @@ Number: 64
 Count: 4
 ```
 #### Example #2
-Lets consider another program I am tired to explain. There will be so many bool arguments.
+Lets consider another program I am tired to explain. There will be many bool arguments.
 ```c++
 #include <iostream>
 #include "pd/pdargs.h"
@@ -95,16 +95,48 @@ terminate called after throwing an instance of 'std::invalid_argument'
 ```
 #### API
 ##### constructor
-Constructor receives `argc` and `argv`. Than two storages are constructed: first is a map for long options and second is vector for short options. This is obvious how the map is constructed.
-
-Vector represents each short option as one string. For example: `-Syu` will be stored as `Syu`, `-m=auto` or `-mauto` or `-m auto` will be stored as `mauto`.
+Constructor receives `argc` and `argv`. This data will be parsed and stored in an internal state.
 
 ##### get
-get just takes a pair `{std::string, char}` and tries to find desired option. Returns `std::optional` of desired type.
+Takes a pair `{std::string, char}` as an argument and tries to find desired option. Returns `std::optional` of desired type. For `bool` returns just bool, because there is no reason to return `std::optional<bool>`.
 
-If it finds one than that option will be removed from storages, so that the next attempt to get same option will be failed.
+If it finds one than that option will be removed from storages, so that the next attempt to get same option will result in empty optional.
 
-Note: ambiguity can appear. Consider the following options: `-Syu -syank`. Attempt to get bool option with `y` as short variant will fail because `y` is present in two strings. That's the ambiguity. In order to deal with it you should always pick valued options before bool options.
+Note: ambiguity can appear. Consider the following options: `-Syu -syank`. Attempt to get bool option with `y` as short variant will fail because `y` is present in two entries. That's the ambiguity. In order to deal with it you should always pick valued options before bool options.
 
 ##### get_or
-get_or takes a pair `{std::string, char}` and a default value to return if search is failing. Pretty much the same as `get` but if the search is failed returns second argument instead of `std::optional`. `get_or<bool>` will fail to compile, because such call makes no sense. 
+Takes a pair `{std::string, char}` and a default value to return if search is failed. Pretty much the same as `get` but if the search is failed returns second argument instead of `std::optional`. `get_or<bool>` will fail to compile, because such call makes no sense.
+
+#### Defining your own types
+Imagine you have a structure:
+```c++
+struct person_t {
+  std::string name;
+  int age;
+};
+```
+
+Classically, if you want to read such structure from cli you will end up with reading a string and then parse that string. Not cool.
+Instead, you can define your own `string_to_T` template in namespace `pd`. Like so:
+```c++
+template<>
+person_t string_to_T<person_t>(const std::string& str) {
+  auto dot_pos = str.find('.');
+  std::string name_str(str, 0, dot_pos);
+  std::string age_str(str, dot_pos + 1 );
+
+  person_t ret = { std::move(name_str), string_to_T<int>(age_str) };
+  return ret;
+}
+```
+
+And then just write:
+
+```c++
+pd::pdargs args(argc, argv);
+auto person = args.get<person_t>({"person", 'p'});
+```
+
+You will get desired object.
+
+For more examples go ahead and check the `test` directory;

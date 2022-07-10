@@ -100,8 +100,11 @@ using enable_get_or_t = std::enable_if_t<is_allowed_get_or_v<T, U>, T>;
 
 }  // namespace detail
 
+template <typename T>
+T string_to_T(const std::string& str);
+
 struct pdargs {
-  explicit pdargs(int argc, const char** argv);
+  explicit pdargs(int argc, char** argv);
 
   template <typename T>
   detail::get_return_type_t<T> get(const std::pair<std::string, char>& key);
@@ -117,9 +120,9 @@ struct pdargs {
   void add_short_arg(std::string key, std::string value);
 
  private:
-  void handle_long_opt(int& i, int argc, const char** argv);
+  void handle_long_opt(int& i, int argc, char** argv);
 
-  void handle_short_opt(int& i, int argc, const char** argv);
+  void handle_short_opt(int& i, int argc, char** argv);
 
  private:
   std::unordered_map<std::string, std::string> long_options_;
@@ -128,7 +131,7 @@ struct pdargs {
   std::vector<std::string> no_interest_options_;
 };
 
-inline pdargs::pdargs(int argc, const char** argv) {
+inline pdargs::pdargs(int argc, char** argv) {
   for (int i = 1; i != argc; ++i) {
     auto arg = argv[i];
 
@@ -143,9 +146,6 @@ inline pdargs::pdargs(int argc, const char** argv) {
     }
   }
 }
-
-template <typename T>
-T string_to_T(const std::string& str);
 
 template <typename T>
 detail::get_return_type_t<T> pdargs::get(const std::pair<std::string, char>& key) {
@@ -204,7 +204,7 @@ detail::enable_get_or_t<T, U> pdargs::get_or(const std::pair<std::string, char>&
   return T{std::forward<U>(args)};
 }
 
-inline void pdargs::handle_long_opt(int& i, int argc, const char** argv) {
+inline void pdargs::handle_long_opt(int& i, int argc, char** argv) {
   auto&& arg = argv[i];
 
   if (i == argc - 1) { // NOLINT: order of conditions matter
@@ -219,7 +219,7 @@ inline void pdargs::handle_long_opt(int& i, int argc, const char** argv) {
   }
 }
 
-inline void pdargs::handle_short_opt(int& i, int argc, const char** argv) {
+inline void pdargs::handle_short_opt(int& i, int argc, char** argv) {
   auto&& arg = argv[i];
 
   if (i == argc - 1) { // NOLINT: order of conditions matter

@@ -3,7 +3,7 @@
 #include <pd/pdargs.h>
 
 TEST(PdargsTest, JustWorks) {
-  const char* argv[] = {"./main", "--port", "8080", "-Syu", "--lines", "blank"};
+  char* argv[] = {"./main", "--port", "8080", "-Syu", "--lines", "blank"};
   int argc = 6;
   pd::pdargs args(argc, argv);
   
@@ -17,7 +17,7 @@ TEST(PdargsTest, JustWorks) {
 }
 
 TEST(PdargsTest, Numbers) {
-  const char* argv[] = {"./main", "--port",    "8080",   "-f", "12.25",   "--negate",
+  char* argv[] = {"./main", "--port",    "8080",   "-f", "12.25",   "--negate",
                   "-402",   "--portion", "-20.24", "-m", "-20.479", "-z-297"};
   int argc = 12;
   pd::pdargs args(argc, argv);
@@ -31,7 +31,7 @@ TEST(PdargsTest, Numbers) {
 }
 
 TEST(PdargsTest, Bools) {
-  const char* argv[] = {"./main", "-Syu", "-iSr", "--root"};
+  char* argv[] = {"./main", "-Syu", "-iSr", "--root"};
   int argc = 4;
   pd::pdargs args(argc, argv);
   
@@ -46,7 +46,7 @@ TEST(PdargsTest, Bools) {
 }
 
 TEST(PdargsTest, Strings) {
-  const char* argv[] = {"./main", "--selection", "primary", "--mode", "active", "-f", "soft", "--force", "super"};
+  char* argv[] = {"./main", "--selection", "primary", "--mode", "active", "-f", "soft", "--force", "super"};
   int argc = 9;
   pd::pdargs args(argc, argv);
   
@@ -60,7 +60,7 @@ TEST(PdargsTest, Strings) {
 }
 
 TEST(PdargsTest, GetOr) {
-  const char* argv[] = {"./main", "--selection", "primary", "-f", "soft", "-c", "55", "-p", "0.5", "--install"};
+  char* argv[] = {"./main", "--selection", "primary", "-f", "soft", "-c", "55", "-p", "0.5", "--install"};
   int argc{10};
   pd::pdargs args(argc, argv);
 
@@ -78,7 +78,7 @@ TEST(PdargsTest, GetOr) {
 }
 
 TEST(PdargsTest, EqualSign) {
-  const char* argv[] = {"./main", "--selection=primary", "-f=soft", "-c=55", "--portion=0.5"};
+  char* argv[] = {"./main", "--selection=primary", "-f=soft", "-c=55", "--portion=0.5"};
   int argc = 5;
   pd::pdargs args(argc, argv);
 
@@ -89,7 +89,7 @@ TEST(PdargsTest, EqualSign) {
 }
 
 TEST(PdargsTest, ShortOpts) {
-  const char* argv[] = {"./main", "-sprimary", "-Wall", "-c155", "-f12.532", "-Xabc"};
+  char* argv[] = {"./main", "-sprimary", "-Wall", "-c155", "-f12.532", "-Xabc"};
   int argc = 6;
   pd::pdargs args(argc, argv);
 
@@ -109,10 +109,40 @@ TEST(PdargsTest, ShortOpts) {
 
 TEST(PdargsTest, TrickyOne)
 {
-  const char* argv[] = { "./main", "-f", "hoo.txt"};
+  char* argv[] = { "./main", "-f", "hoo.txt"};
   int argc = 3;
   pd::pdargs args(argc, argv);
 
   EXPECT_FALSE(args.get<bool>({"help", 'h'}));
   EXPECT_EQ(args.get<std::string>({"file", 'f'}), "hoo.txt");
+}
+
+struct person_t {
+  std::string name;
+  int age;
+};
+
+namespace pd {
+
+template<>
+person_t string_to_T<person_t>(const std::string& str) {
+  auto dot_pos = str.find('.');
+  std::string name_str(str, 0, dot_pos);
+  std::string age_str(str, dot_pos + 1 );
+
+  person_t ret = { std::move(name_str), string_to_T<int>(age_str) };
+  return ret;
+}
+
+} // namespace pd
+
+TEST(PdargsTest, CustomStringToT) {
+  char* argv[] = { "./main", "-p", "Rel.19" };
+  int argc = 3;
+
+  pd::pdargs args(argc, argv);
+  auto person = args.get<person_t>({"person", 'p'});
+  EXPECT_TRUE(person.has_value());
+  EXPECT_EQ(person->name, "Rel");
+  EXPECT_EQ(person->age, 19);
 }

@@ -18,32 +18,27 @@ struct pdargs;
 
 namespace detail {
 inline void ltrim(std::string& str) {
-  str.erase(str.begin(), std::find_if(str.cbegin(), str.cend(), 
-                                      [](auto e) { return e != '-'; }));
+  str.erase(str.begin(), std::find_if(str.cbegin(), str.cend(), [](auto e) { return e != '-'; }));
 }
 
 inline std::pair<std::string, std::string> lpartition(std::string str, char delim) {
   auto delim_pos = str.find(delim);
 
   if (delim_pos == std::string::npos) {
-    return { std::string(str), {} };
+    return {std::string(str), {}};
   }
 
   std::string rhs = std::string(str, delim_pos + 1);
   str.erase(delim_pos);
 
-  return { std::move(str), std::move(rhs) };
+  return {std::move(str), std::move(rhs)};
 }
 
 inline bool is_opt(std::string_view opt) { return opt[0] == '-'; }
 
-inline bool is_short_opt(std::string_view opt) {
-  return is_opt(opt);
-}
+inline bool is_short_opt(std::string_view opt) { return is_opt(opt); }
 
-inline bool is_long_opt(std::string_view opt) {
-  return is_opt(opt) and opt[1] == '-';
-}
+inline bool is_long_opt(std::string_view opt) { return is_opt(opt) and opt[1] == '-'; }
 
 inline bool is_digit(char c) noexcept { return c >= '0' and c <= '9'; }
 
@@ -53,8 +48,7 @@ inline bool is_looks_like_number(std::string_view str) {
   return is_negative_number or is_positive_number;
 }
 
-inline bool erase_bool_flag(std::vector<std::string>& arguments, char flag)
-{
+inline bool erase_bool_flag(std::vector<std::string>& arguments, char flag) {
   bool erased = false;
   auto find_flag_in_string = [flag, &erased](char ch) {
     if (ch == flag) {
@@ -69,7 +63,7 @@ inline bool erase_bool_flag(std::vector<std::string>& arguments, char flag)
     return false;
   };
 
-  auto erase_string = [&find_flag_in_string](std::string& str){
+  auto erase_string = [&find_flag_in_string](std::string& str) {
     str.erase(std::remove_if(str.begin(), str.end(), find_flag_in_string), str.end());
     return str.empty();
   };
@@ -92,10 +86,10 @@ struct get_return_type<bool> {
 template <typename T>
 using get_return_type_t = typename get_return_type<T>::type;
 
-template<typename T, typename U>
+template <typename T, typename U>
 constexpr bool is_allowed_get_or_v = std::is_convertible_v<U, T> and not std::is_same_v<T, bool>;
 
-template<typename T, typename U>
+template <typename T, typename U>
 using enable_get_or_t = std::enable_if_t<is_allowed_get_or_v<T, U>, T>;
 
 }  // namespace detail
@@ -109,8 +103,14 @@ struct pdargs {
   template <typename T>
   detail::get_return_type_t<T> get(const std::pair<std::string, char>& key);
 
-  template <typename T, typename U = T >
+  template <typename T, typename U = T>
   detail::enable_get_or_t<T, U> get_or(const std::pair<std::string, char>& key, U&&);
+
+  const std::vector<std::string>& get_unnamed_args() const& { return no_interest_options_; }
+
+  std::vector<std::string>& get_unnamed_args() & { return no_interest_options_; }
+
+  std::vector<std::string>&& get_unnamed_args() && { return std::move(no_interest_options_); }
 
  private:
   void add_long_arg(std::string key);
@@ -159,10 +159,9 @@ detail::get_return_type_t<T> pdargs::get(const std::pair<std::string, char>& key
   }
 
   if (!long_arg.empty() and (short_arg != short_options_.end() or not short_long_arg.empty())) {
-    throw std::runtime_error(
-        "Option is presented both in long and short variants.\n");
+    throw std::runtime_error("Option is presented both in long and short variants.\n");
   }
-  
+
   if (!long_arg.empty()) {
     return string_to_T<T>(std::move(long_arg.mapped()));
   }
@@ -170,7 +169,7 @@ detail::get_return_type_t<T> pdargs::get(const std::pair<std::string, char>& key
   if (!short_long_arg.empty()) {
     return string_to_T<T>(std::move(short_long_arg.mapped()));
   }
-  
+
   auto ret = string_to_T<T>(std::string(*short_arg, 1));
   short_options_.erase(short_arg);
   return ret;
@@ -181,16 +180,13 @@ inline detail::get_return_type_t<bool> pdargs::get<bool>(const std::pair<std::st
   auto long_arg = long_options_.extract(key.first);
   auto short_long_arg = short_split_options_.extract(key.second);
   auto short_flag = detail::erase_bool_flag(short_options_, key.second);
-  
-  if (long_arg.empty() and not short_flag and short_long_arg.empty())
-  {
+
+  if (long_arg.empty() and not short_flag and short_long_arg.empty()) {
     return false;
   }
-  
-  if (not long_arg.empty() and (short_flag or not short_long_arg.empty()))
-  {
-    throw std::runtime_error(
-        "Option is presented both in long and short variants.\n");
+
+  if (not long_arg.empty() and (short_flag or not short_long_arg.empty())) {
+    throw std::runtime_error("Option is presented both in long and short variants.\n");
   }
   return true;
 }
@@ -207,13 +203,12 @@ detail::enable_get_or_t<T, U> pdargs::get_or(const std::pair<std::string, char>&
 inline void pdargs::handle_long_opt(int& i, int argc, char** argv) {
   auto&& arg = argv[i];
 
-  if (i == argc - 1) { // NOLINT: order of conditions matter
+  if (i == argc - 1) {  // NOLINT: order of conditions matter
     add_long_arg(arg);
-    
-  } else if (not detail::is_opt(argv[i + 1]) or
-             detail::is_looks_like_number(argv[i + 1])) {
+
+  } else if (not detail::is_opt(argv[i + 1]) or detail::is_looks_like_number(argv[i + 1])) {
     add_long_arg(arg, argv[++i]);
-    
+
   } else {
     add_long_arg(arg);
   }
@@ -222,13 +217,12 @@ inline void pdargs::handle_long_opt(int& i, int argc, char** argv) {
 inline void pdargs::handle_short_opt(int& i, int argc, char** argv) {
   auto&& arg = argv[i];
 
-  if (i == argc - 1) { // NOLINT: order of conditions matter
+  if (i == argc - 1) {  // NOLINT: order of conditions matter
     add_short_arg(arg);
-   
-  } else if (not detail::is_opt(argv[i + 1]) or
-             detail::is_looks_like_number(argv[i + 1])) {
+
+  } else if (not detail::is_opt(argv[i + 1]) or detail::is_looks_like_number(argv[i + 1])) {
     add_short_arg(arg, argv[++i]);
-    
+
   } else {
     add_short_arg(arg);
   }
@@ -281,8 +275,7 @@ inline long long string_to_T<long long>(const std::string& str) {
 template <>
 inline unsigned string_to_T<unsigned>(const std::string& str) {
   unsigned long result = std::stoul(str);
-  if (result > std::numeric_limits<unsigned>::max())
-    throw std::out_of_range("stou");
+  if (result > std::numeric_limits<unsigned>::max()) throw std::out_of_range("stou");
   return result;
 }
 
